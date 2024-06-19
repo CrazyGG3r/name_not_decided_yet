@@ -58,6 +58,11 @@ var stamina_recovery_rate = stamina_cap / 6.0  # Rate of stamina recovery
 # Get the gravity setting from project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+#choppy animation settings
+const FRAME_TIME := 0.17
+var time_accumulator := 0.0
+var last_animation := ""
+var animation_position := 0.0
 # Function to decrease stamina
 func decrease_stamina(amount):
 	if is_recovering:
@@ -214,10 +219,12 @@ func _physics_process(delta):
 			if animation_player.current_animation != "walking":
 				if walking:
 					animation_player.advance(delta / 2)
-				animation_player.play("walking")
+				#animation_player.play("walking")
+				set_animation("walking")
 		else:	
 			if animation_player.current_animation != "running":
-				animation_player.play("running")
+				#animation_player.play("running")
+				set_animation("running")
 		
 		if !is_locked:
 			visuals.look_at(position + direction)  # Run in the direction the character is facing
@@ -235,3 +242,19 @@ func _physics_process(delta):
 	
 	# Move the character
 	move_and_slide()  # Move the character based on velocity
+
+func set_animation(animation_name):
+	var ticks_msec = Time.get_ticks_msec();
+	if last_animation != animation_name:
+		animation_player.play(animation_name)
+		animation_player.stop()
+		last_animation = animation_name
+		animation_position = 0.0
+		time_accumulator = 0.0
+	elif time_accumulator>= FRAME_TIME:
+		animation_position += time_accumulator
+		animation_player.seek(animation_position,true)
+		animation_player.stop(true)
+		print(float(ticks_msec%int(FRAME_TIME * 1000))/1000);
+		time_accumulator += float(ticks_msec%int(FRAME_TIME * 1000))/1000;
+	
